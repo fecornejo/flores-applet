@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dos perillas sobre la EDE reversa</title>
+<script src="config.js"></script>
+<style>
+  :root{ --eta:#5b9bd5; --w:#e15759; --bg:#0d1117; --fg:#e6edf3; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--fg);
+        font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+        min-height:100vh; display:flex; flex-direction:column; align-items:center;
+        justify-content:center; padding:24px; }
+  h1{ font-weight:600; font-size:clamp(18px,2.4vw,28px); margin:0 0 4px; text-align:center; }
+  .sub{ opacity:.6; font-size:14px; margin-bottom:18px; text-align:center; }
+  .stage{ display:flex; align-items:center; justify-content:center; }
+  img{ max-width:92vw; max-height:56vh; border-radius:10px; background:#000;
+       box-shadow:0 8px 40px rgba(0,0,0,.6); }
+  .controls{ width:min(680px,92vw); margin-top:22px; display:flex; flex-direction:column; gap:18px; }
+  .row{ display:grid; grid-template-columns:120px 1fr 90px; align-items:center; gap:14px; }
+  .name{ font-weight:600; font-size:18px; }
+  .name.eta{ color:var(--eta); }
+  .name.w{ color:var(--w); }
+  .val{ font-variant-numeric:tabular-nums; font-size:18px; text-align:right; opacity:.9; }
+  input[type=range]{ -webkit-appearance:none; appearance:none; height:6px; border-radius:999px;
+                     background:#30363d; outline:none; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:22px; height:22px;
+                     border-radius:50%; cursor:pointer; border:3px solid #0d1117; }
+  input[type=range]::-moz-range-thumb{ width:22px; height:22px; border-radius:50%;
+                     cursor:pointer; border:3px solid #0d1117; }
+  #rEta::-webkit-slider-thumb{ background:var(--eta); }
+  #rEta::-moz-range-thumb{ background:var(--eta); }
+  #rW::-webkit-slider-thumb{ background:var(--w); }
+  #rW::-moz-range-thumb{ background:var(--w); }
+  .hint{ opacity:.45; font-size:12px; margin-top:16px; text-align:center; max-width:680px; }
+</style>
+</head>
+<body>
+  <h1>Dos perillas sobre la EDE reversa</h1>
+  <div class="sub">generación de flores por difusión latente · η = ruido · w = guía del discriminador</div>
+  <div class="stage"><img id="flor" alt="flores generadas"></div>
+  <div class="controls">
+    <div class="row">
+      <span class="name eta">η · ruido</span>
+      <input id="rEta" type="range" min="0" step="1" value="0">
+      <span class="val" id="vEta">0.00</span>
+    </div>
+    <div class="row">
+      <span class="name w">w · guía</span>
+      <input id="rW" type="range" min="0" step="1" value="0">
+      <span class="val" id="vW">0.0</span>
+    </div>
+  </div>
+  <div class="hint">η=0 determinista (DDIM) · η=1 estocástico (DDPM) · w sube la corrección hacia “real”. Mismo punto de partida en toda la grilla. Flechas del teclado también mueven los diales.</div>
+<script>
+  // Si config.js no carga (p. ej. por restricciones de file://), estos valores por defecto
+  // calzan con la grilla por defecto de la celda generadora.
+  var APP = window.APPLET || { etas:[0, 0.25, 0.5, 0.75, 1], ws:[0, 2, 4, 6, 8], n:4 };
+
+  var rEta = document.getElementById('rEta');
+  var rW = document.getElementById('rW');
+  var vEta = document.getElementById('vEta');
+  var vW = document.getElementById('vW');
+  var flor = document.getElementById('flor');
+
+  rEta.max = APP.etas.length - 1;
+  rW.max = APP.ws.length - 1;
+  // partir en una celda intermedia: buen punto para arrancar la demo
+  rEta.value = Math.floor((APP.etas.length - 1) / 2);
+  rW.value = Math.floor((APP.ws.length - 1) / 2);
+
+  function update(){
+    var ei = parseInt(rEta.value, 10);
+    var wi = parseInt(rW.value, 10);
+    vEta.textContent = Number(APP.etas[ei]).toFixed(2);
+    vW.textContent = Number(APP.ws[wi]).toFixed(1);
+    flor.src = 'cell_' + ei + '_' + wi + '.png';
+  }
+
+  rEta.addEventListener('input', update);
+  rW.addEventListener('input', update);
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowLeft'){ rW.value = Math.max(0, parseInt(rW.value, 10) - 1); update(); }
+    if(e.key === 'ArrowRight'){ rW.value = Math.min(rW.max, parseInt(rW.value, 10) + 1); update(); }
+    if(e.key === 'ArrowDown'){ rEta.value = Math.max(0, parseInt(rEta.value, 10) - 1); update(); }
+    if(e.key === 'ArrowUp'){ rEta.value = Math.min(rEta.max, parseInt(rEta.value, 10) + 1); update(); }
+  });
+
+  update();
+</script>
+</body>
+</html>
